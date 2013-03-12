@@ -10,23 +10,23 @@
 # Distributed under GPL v.2.
 #---------------------------------------------------------------
 
-clear
+#clear
 
 paID=""
 qPath=""
 
 
-function unmute() {
+unmute() {
 	echo "Unmuting"
-	pacmd "set-sink-mute 0 0"
+	su pi -c 'pacmd "set-sink-mute 0 0"'
 }
 
-function mute() {
+mute() {
 	echo "Muting"
-	pacmd "set-sink-mute 0 1"
+	su pi -c 'pacmd "set-sink-mute 0 1"'
 }
 
-function connect() {
+connect() {
 	# Return Example: /org/bluez/29159/hci0/dev_01_23_45_AB_CD_EF
 	qPath="$(qdbus --system org.bluez | grep -m 1 "/dev_")"
 
@@ -44,32 +44,39 @@ function connect() {
 	unmute
 
 	# Return Example: bluez_source.01_23_45_AB_CD_EF
-	bluezSource="$(pactl list | grep -m 1 "Name: bluez_source" | cut -c 8-)"
+	bluezSource="$(su pi -c "pactl list" | grep -m 1 "Name: bluez_source" | cut -c 8-)"
 	echo "[Connected] Bluez Source: ${bluezSource}"
 
 	# Return Example: alsa_output.pci-0000_00_10.1.analog-stereo
-	alsaSink="$(pactl list | grep -m 1 "Name: alsa_output" | cut -c 8-)"
+	alsaSink="$(su pi -c "pactl list" | grep -m 1 "Name: alsa_output" | cut -c 8-)"
 	echo "[Connected] Alsa Sink: ${alsaSink}"
 
 	# Return Example: 25
-	paID="$(pactl load-module module-loopback source="${bluezSource}" sink="${alsaSink}")"
+	paID=$(su pi -c "pactl load-module module-loopback source=${bluezSource} sink=${alsaSink}")
 	echo "[Connected] pactl ID number: ${paID}"
 }
 
-function disconnect() {
-	mute
+disconnect() {
+ 
+        #This section of code shoudl work fine, but apparently with the 2.9.2013 kernel + bluez 4.99
+        #there is a bug that causes the kernel to lock up on BT disconnect. My fix? reboot.
+	#  http://thread.gmane.org/gmane.linux.bluez.kernel/34375
 
-	echo "[Disconnected] Unloading module: ${paID}"
-	pactl unload-module "${paID}"
-
-	echo "[Disconnected] Device disconnected, restarting..."
+	#mute
+	#echo "[Disconnected] Unloading module: ${paID}"
+	#su pi -c "pactl unload-module ${paID}"
+	#qPath="$(qdbus --system org.bluez | grep -m 1 "/dev_")"
+	#qdbus --system org.bluez "${qPath}" org.bluez.AudioSource.Disconnect 1> /dev/null
+	#echo "[Disconnected] Device disconnected, restarting..."
+       
+	reboot
 }
 
-function main() {
+main() {
 	echo "Waiting for connection..."
 	while :
 	do
-		qPath="$(pactl list | grep -m 1 'Name: bluez_source' | cut -c 8-)"
+		qPath="$(su pi -c 'pactl list' | grep -m 1 'Name: bluez_source' | cut -c 8-)"
 		if [ "$qPath" != ""  ]
 		then
 			echo "Found ${qPath}, connecting..."
@@ -92,8 +99,9 @@ main
 
 while :
 do
-	qPath="$(pactl list | grep -m 1 'Name: bluez_source' | cut -c 8-)"
-	if [ "${qPath}" == "" ]
+	qPath="$(su pi -c 'pactl list' | grep -m 1 'Name: bluez_source' | cut -c 8-)"
+
+	if [ -z "${qPath}" ]
 	then
 		disconnect
 		main

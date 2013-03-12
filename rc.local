@@ -1,8 +1,0 @@
-#!/bin/bash
-#
-# /etc/rc.local: Local multi-user start-up script.
-#
-
-rm /var/log/bluetoothAudio.log
-touch /var/log/bluetoothAudio.log
-/root/startup.sh 2>&1 | tee -a /var/log/bluetoothAudio.log
