@@ -1,10 +1,13 @@
-cd "$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+#!/bin/sh
+#cd "$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DIR=$( readlink -f "$( dirname "$0" )")
+cd "$( cd -P $DIR && pwd )"
 
 # Modprobe the internal sound card
 #modprobe snd_bcm2835
 
 # Start pulseaudio
-pulseaudio --start
+su pi -c 'pulseaudio --start'
 
 # Set up the bluetooth adapter to be as visible as possible.
 hciconfig hci0 piscan
