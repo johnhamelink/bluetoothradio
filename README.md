@@ -1,4 +1,7 @@
 #Raspberry Pi Bluetooth Audio Player (Wheezy 2.9.2013)
+
+## This project isn't really maintained anymore and is looking for a new home. If you're interested, submit an issue saying so!
+
 ## POSSIBLE ISSUE
 
 According to the bluez-dev team, there is an issue with the kernel (at this time Linux raspberrypi 3.6.11+)
